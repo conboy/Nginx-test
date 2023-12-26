@@ -2,15 +2,30 @@ version: '3.8'
 
 services:
   nextjs:
+    container_name: nextjs
     build:
       dockerfile: ./nextjs/Dockerfile
     ports:
       - "3000:3000"
 
   nginx:
-    build: 
-      dockerfile: ./nginx/Dockerfile
+    container_name: nginx
+    restart: unless-stopped
+    image: nginx
     ports:
-      - "80:80"
+      - 80:80
+      - 443:443
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
     depends_on:
       - nextjs
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes: 
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    command: certonly --webroot -w /var/www/certbot --force-renewal --email conjamalex@gmail.com -d conboy.dev --agree-tos
